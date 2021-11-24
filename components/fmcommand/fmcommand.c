@@ -21,83 +21,36 @@ static int command_help_handler(int argc, char **argv);
  * PUBLIC
  * --------------------------------------------------------------------- */
 void command_register_commands(void) {
-  command_t *c = command_add("help", "Display help text.");
-  command_add_default_action(c, "Display help text.", command_help_handler);
-}
+  static command_t cmd_help = {.next = 0x0, .action = 0x0, .command = "help", .help = "Display help text."};
+  static action_t act_help = {.defact = 1, .next = 0x0, .action = 0x0, .help = "Display help text.", .func = command_help_handler };
 
+  command_add(&cmd_help);
+  command_add_action(&cmd_help, &act_help);
+}
 
 /* ------------------------------------------------------------------------
  * PUBLIC
  * --------------------------------------------------------------------- */
-command_t* command_add(const char *command, const char *help) {
-
-  // create the command 
-  command_t *c = malloc(sizeof(command_t));
-
-  c->command = malloc(strlen(command)+1);
-  strcpy(c->command, command);
-
-  c->help = malloc(strlen(help)+ 1);
-  strcpy(c->help, help);
-
-  c->next = 0x0;
-  c->action = 0x0;
-
-
-  // link the command to linked list
+void command_add(command_t *c) {
   command_t *last = get_last_command();
   if(last == 0x0) {
-    root_command = c; 
+    root_command = c;
   } else {
     last->next = (void*)c;
   }
-
-  return c;
 }
 
 /* ------------------------------------------------------------------------
  * PUBLIC
  * --------------------------------------------------------------------- */
-action_t* command_add_action(command_t *command, const char *action, const char *help, command_action_func func) {
-  // create action 
-  action_t *a = malloc(sizeof(action_t));
-
-  if(action != 0x0) {
-    a->action = malloc(strlen(action));
-    strcpy(a->action, action);
-  } else {
-    a->action = 0x0;
-  }
-
-  a->help = malloc(strlen(help));
-  strcpy(a->help, help);
-
-  a->func = func;
-  a->next = 0x0;
-  a->defact = 0;
-
-  // link the action to the linked list
-  action_t *last = get_last_action(command);
+void command_add_action(command_t *c, action_t *a) {
+  action_t *last = get_last_action(c);
   if(last == 0x0) {
-    command->action = a;
+    c->action = a;
   } else {
     last->next = (void*)a;
   }
-
-  return a;
 }
-
-
-/* ------------------------------------------------------------------------
- * PUBLIC
- * --------------------------------------------------------------------- */
-action_t* command_add_default_action(command_t *command, const char *help, command_action_func func) {
-  action_t *a = command_add_action(command,0x0,help, func);
-  a->defact = 1;
-
-  return a;
-}
-
 
 /* ------------------------------------------------------------------------
  * PUBLIC

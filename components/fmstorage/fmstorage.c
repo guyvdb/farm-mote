@@ -30,16 +30,13 @@ void storage_initialize(void) {
  * PUBLIC
  * --------------------------------------------------------------------- */ 
 void storage_register_commands(void) {
-  command_t *c = command_add("flash", "Access flash memory.");
-  command_add_action(c, "erase", "Erase the flash chip.", storage_command_erase_handler);
+  static command_t cmd_flash = {.next = 0x0, .action = 0x0, .command = "flash", .help = "Access flash memory."};
+  static action_t act_flash_erase = {.defact = 0, .next = 0x0, .action = "erase", .help = "Erase the flash chip.", .func = storage_command_erase_handler };
+
+
+  command_add(&cmd_flash);
+  command_add_action(&cmd_flash, &act_flash_erase);
 }
-
-
-
-/* command_t* command_add(const char *command, const char *help); */
-/* action_t* command_add_action(command_t *command, const char *action, const char *help, command_action_func func); */
-/* action_t* command_add_default_action(command_t *command, const char *help, command_action_func func); */
-
 
 /* ------------------------------------------------------------------------
  * PUBLIC

@@ -1,16 +1,16 @@
 #include <fmsystem.h>
 #include <fmconsole.h>
 #include <fmcommand.h>
+#include <fmstorage.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 #include <stdint.h>
 #include <esp_system.h>
 
-/*  
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-*/
- 
+
+#define BUFLEN 128
+
 /* ------------------------------------------------------------------------
  * PRIVATE DECLARATION
  * --------------------------------------------------------------------- */
@@ -21,8 +21,7 @@ static int system_command_node_set_handler(int argc, char **argv);
 static int system_command_node_get_handler(int argc, char **argv);
 static int system_command_reboot_handler(int argc, char **argv);
 static int system_command_mem_handler(int argc, char **argv);
-//static int system_command_tasks_handler(int argc, char **argv);
-//static uint32_t get_unix_timestamp(void);
+static void print_node_nvs_key_error(void);
 
 /* ------------------------------------------------------------------------
  * PUBLIC
@@ -36,43 +35,42 @@ void system_initialize(void) {
  * PUBLIC
  * --------------------------------------------------------------------- */
 void system_register_commands(void) {
-  command_t *c;
-
-  printf("1\n");
-
   // time
-  c = command_add("time", "System time settings.");
-  command_add_default_action(c,"Get the time.", system_command_time_handler);
-  command_add_action(c, "set", "Set the clock.", system_command_time_handler);
+  static command_t cmd_time = {.next = 0x0, .action = 0x0, .command = "time", .help = "System time."};
+  static action_t act_time_get = {.defact = 1, .next = 0x0, .action = 0x0, .help = "Get the time.", .func =  system_command_time_handler };
+  static action_t act_time_set = {.defact = 0, .next = 0x0, .action = "set", .help = "Set the clock.", .func =  system_command_time_handler };
 
-  printf("2\n");
+  command_add(&cmd_time);
+  command_add_action(&cmd_time, &act_time_get);
+  command_add_action(&cmd_time, &act_time_set);
 
-  c = command_add("node", "Node information");
-  command_add_action(c, "info","Print node information.", system_command_node_info_handler);
-  command_add_action(c, "id", "Print node id.", system_command_node_id_handler);
-  command_add_action(c, "set", "Set a node parameter.", system_command_node_set_handler);
-  command_add_action(c, "get", "Get a node parameter", system_command_node_get_handler);
+  // Node 
+  static command_t cmd_node = {.next = 0x0, .action = 0x0, .command = "node", .help = "Node information."};
+  static action_t act_node_info = {.defact = 0, .next = 0x0, .action = "info", .help = "Get node information.", .func =  system_command_node_info_handler };
+  static action_t act_node_id = {.defact = 0, .next = 0x0, .action = "id", .help = "Get node id.", .func = system_command_node_id_handler };
+  static action_t act_node_set = {.defact = 0, .next = 0x0, .action = "set", .help = "Set a node parameter.", .func =  system_command_node_set_handler };
+  static action_t act_node_get = {.defact = 0, .next = 0x0, .action = "get", .help = "Get a node parameter.", .func = system_command_node_get_handler };
 
-  printf("3\n");
+  command_add(&cmd_node);
+  command_add_action(&cmd_node, &act_node_info);
+  command_add_action(&cmd_node, &act_node_id);
+  command_add_action(&cmd_node, &act_node_set);
+  command_add_action(&cmd_node, &act_node_get);
+
 
   // reboot
-  //c = command_add("reboot", "Reboot");
-  //command_add_default_action(c, "Reboot the system", system_command_reboot_handler);
+  static command_t cmd_reboot = {.next = 0x0, .action = 0x0, .command = "reboot", .help = "Reboot the system."};
+  static action_t act_reboot = {.defact = 1, .next = 0x0, .action = 0x0, .help = "Reboot the system.", .func =  system_command_reboot_handler };
 
-  printf("4\n");
+  command_add(&cmd_reboot);
+  command_add_action(&cmd_reboot, &act_reboot);
 
   // mem
-  //  c = command_add("mem", "System memory.");
-  // command_add_default_action(c, "Get system memory.", system_command_mem_handler);
+  static command_t cmd_mem = {.next = 0x0, .action = 0x0, .command = "mem", .help = "Get system memory."};
+  static action_t act_mem = {.defact = 1, .next = 0x0, .action = 0x0, .help = "Get system memory.", .func =  system_command_mem_handler };
 
-
-  printf("5\n");
-
-
-  // tasks
-  //c = command_add("tasks", "System tasks.");
-  //command_add_default_action(c, "View system task information.", system_command_tasks_handler);
-
+  command_add(&cmd_mem);
+  command_add_action(&cmd_mem, &act_mem);
 }
 
 
@@ -81,54 +79,6 @@ void system_print_heap_free(void) {
   uint32_t fmem = esp_get_free_heap_size();
   printf("Heap free %d\n", fmem);
 }
-
-
-
-/* ------------------------------------------------------------------------
- *
- * --------------------------------------------------------------------- */
-/* static uint32_t get_unix_timestamp(void) { */
-/*   struct timeval tv; */
-/*   gettimeofday(&tv, NULL); */
-/*   return (uint32_t)tv.tv_sec; */
-/* } */
-
-
-/* ------------------------------------------------------------------------
- * COMMAND
- * --------------------------------------------------------------------- */
-/*  
-static int system_command_tasks_handler(int argc, char **argv) {
-  TaskStatus_t * task_status_array;
-  UBaseType_t task_count;
-  unsigned int percent;
-  unsigned int total_runtime;
-
-  task_count =uxTaskGetNumberOfTasks();
-  task_status_array = malloc(task_count * sizeof(TaskStatus_t));
-
-  if(task_status_array != 0x0) {
-    task_count = uxTaskGetSystemState(task_status_array, task_count, &total_runtime);
-    total_runtime /= 100UL;
-
-    if(total_runtime > 0) {
-
-      printf("-----------------\n");
-      printf("%-25s%-10s%-10s\n", "Task", "Time", "%");
-      for(int i=0; i < task_count; i++) {
-        percent = task_status_array[i].ulRunTimeCounter / total_runtime;
-        printf("%-25s%-10d%-10d\n", task_status_array[i].pcTaskName, task_status_array[i].ulRunTimeCounter, percent);
-      }
-    }
-
-
-    free(task_status_array);
-  }
-
-  return 0;
-
-}
-*/
 
 
 /* ------------------------------------------------------------------------
@@ -216,6 +166,26 @@ static int system_command_node_info_handler(int argc, char **argv) {
  * COMMAND
  * --------------------------------------------------------------------- */
 static int system_command_node_set_handler(int argc, char **argv) {
+
+  // there should be two args -- key and value
+
+  if(argc < 2) {
+    printf("Error - usage: node set <key> <value>\n");
+    return 1;
+  }
+
+  char *key = argv[0];
+  char *value = argv[1];
+
+  if(strcmp(key, "name") == 0) {
+    storage_set_node_name(value);
+    printf("Node name set to '%s'.\n", value);
+    return 0;
+  }
+
+  print_node_nvs_key_error();
+  return 1;
+
   return 0;
 }
 
@@ -223,7 +193,23 @@ static int system_command_node_set_handler(int argc, char **argv) {
  * COMMAND
  * --------------------------------------------------------------------- */
 static int system_command_node_get_handler(int argc, char **argv){
-  return 0;
+  char buf[BUFLEN];
+
+  if(argc < 1) {
+    printf("Error - usage: node get <key>\n");
+    return 1;
+  }
+
+  char *key = argv[0];
+
+  if(strcmp(key, "name") == 0) {
+    storage_get_node_name(buf, BUFLEN);
+    printf("Node name: '%s'.\n", buf);
+    return 0;
+  }
+
+  print_node_nvs_key_error();
+  return 1;
 }
 
 /* ------------------------------------------------------------------------
@@ -243,3 +229,10 @@ static int system_command_mem_handler(int argc, char **argv) {
   return 0;
 }
 
+
+/* ------------------------------------------------------------------------
+ * PRIVATE
+ * --------------------------------------------------------------------- */
+static void print_node_nvs_key_error(void) {
+  printf("Error - invalid key. Keys are: name.\n");
+}

@@ -30,9 +30,13 @@ void queue_task_start(void) {}
  * PUBLIC
  * --------------------------------------------------------------------- */
 void queue_register_commands(void) {
-  command_t *c = command_add("queue", "Modify message queue settings.");
-  command_add_action(c, "set", "Set a queue parameter.", queue_command_set_handler);
-  command_add_action(c, "get", "Get a queue parameter.", queue_command_get_handler);
+  static command_t cmd_queue = {.next = 0x0, .action = 0x0, .command = "queue", .help = "Modify message queue settings."};
+  static action_t act_queue_set = {.defact = 0, .next = 0x0, .action = "set", .help = "Set a queue parameter.", .func =  queue_command_set_handler};
+  static action_t act_queue_get = {.defact = 0, .next = 0x0, .action = "get", .help = "Get a queue parameter.", .func =  queue_command_get_handler};
+
+  command_add(&cmd_queue);
+  command_add_action(&cmd_queue, &act_queue_set);
+  command_add_action(&cmd_queue, &act_queue_get);
 }
 
 

@@ -31,11 +31,17 @@ void wifi_initialize(void) {
  * PUBLIC
  * --------------------------------------------------------------------- */
 void wifi_register_commands(void) {
-  command_t *c = command_add("wifi", "Modify wifi settings.");
-  command_add_action(c, "set", "Set a wifi parameter.", wifi_command_set_handler);
-  command_add_action(c, "get", "Get a wifi parameter.", wifi_command_get_handler);
-  command_add_action(c, "up", "Bring up the wifi connection.", wifi_command_up_handler);
-  command_add_action(c,"down", "Bring down the wifi connection.", wifi_command_down_handler);
+  static command_t cmd_wifi = {.next = 0x0, .action = 0x0, .command = "wifi", .help = "Modify wifi settings."};
+  static action_t act_wifi_set = {.defact = 0, .next = 0x0, .action = "set", .help = "Set a wifi parameter.", .func =  wifi_command_set_handler};
+  static action_t act_wifi_get = {.defact = 0, .next = 0x0, .action = "get", .help = "Get a wifi parameter.", .func =  wifi_command_get_handler};
+  static action_t act_wifi_up = {.defact = 0, .next = 0x0, .action = "up", .help = "Bring up the wifi connection.", .func =  wifi_command_up_handler};
+  static action_t act_wifi_down = {.defact = 0, .next = 0x0, .action = "down", .help = "Bring down the wifi connection.", .func =  wifi_command_down_handler};
+
+  command_add(&cmd_wifi);
+  command_add_action(&cmd_wifi, &act_wifi_set);
+  command_add_action(&cmd_wifi, &act_wifi_get);
+  command_add_action(&cmd_wifi, &act_wifi_up);
+  command_add_action(&cmd_wifi, &act_wifi_down);
 }
 
 /* ------------------------------------------------------------------------

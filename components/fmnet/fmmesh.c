@@ -40,10 +40,16 @@ void mesh_task_start(void) {}
  * PUBLIC
  * --------------------------------------------------------------------- */
 void mesh_register_commands(void) {
-  command_t *c = command_add("mesh", "Modify mesh settings.");
-  command_add_action(c, "set", "Set a mesh parameter.", mesh_command_set_handler);
-  command_add_action(c, "get", "Get a mesh parameter.", mesh_command_get_handler);
-  command_add_action(c, "routes", "Get the mesh routing table.", mesh_command_routes_handler);
+
+  static command_t cmd_mesh = {.next = 0x0, .action = 0x0, .command = "mesh", .help = "Modify mesh settings."};
+  static action_t act_mesh_set = {.defact = 0, .next = 0x0, .action = "set", .help = "Set a mesh parameter.", .func =  mesh_command_set_handler};
+  static action_t act_mesh_get = {.defact = 0, .next = 0x0, .action = "get", .help = "Get a mesh parameter.", .func =  mesh_command_get_handler};
+  static action_t act_mesh_routes = {.defact = 0, .next = 0x0, .action = "up", .help = "Get the mesh routing table.", .func =  mesh_command_routes_handler};
+
+  command_add(&cmd_mesh);
+  command_add_action(&cmd_mesh, &act_mesh_set);
+  command_add_action(&cmd_mesh, &act_mesh_get);
+  command_add_action(&cmd_mesh, &act_mesh_routes);
 }
 
 

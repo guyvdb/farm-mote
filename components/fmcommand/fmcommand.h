@@ -35,11 +35,13 @@ void command_register_commands(void);
 
 
 
+void command_add(command_t *c);
+void command_add_action(command_t *c, action_t *a);
 
 
-command_t* command_add(const char *command, const char *help);
-action_t* command_add_action(command_t *command, const char *action, const char *help, command_action_func func);
-action_t* command_add_default_action(command_t *command, const char *help, command_action_func func);
+//command_t* command_add(const char *command, const char *help);
+//action_t* command_add_action(command_t *command, const char *action, const char *help, command_action_func func);
+//action_t* command_add_default_action(command_t *command, const char *help, command_action_func func);
 
 
 
