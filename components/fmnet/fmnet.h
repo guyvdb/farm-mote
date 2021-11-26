@@ -3,7 +3,7 @@
 
 
 void net_initialize(void);
-void net_task_start(void);
+void net_run(void);
 void net_register_commands(void);
 
 

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+
+xtensa-esp32-elf-addr2line -pfia -e build/*.elf Backtrace: 0x400d33ed:0x3ffba950 0x400d1052:0x3ffbaa60

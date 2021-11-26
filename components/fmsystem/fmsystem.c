@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <esp_system.h>
+#include <freertos/timer.h>
 
 
 #define BUFLEN 128
@@ -22,6 +23,7 @@ static int system_command_node_get_handler(int argc, char **argv);
 static int system_command_reboot_handler(int argc, char **argv);
 static int system_command_mem_handler(int argc, char **argv);
 static void print_node_nvs_key_error(void);
+
 
 /* ------------------------------------------------------------------------
  * PUBLIC
@@ -74,11 +76,87 @@ void system_register_commands(void) {
 }
 
 
-
+/* ------------------------------------------------------------------------
+ * PUBLIC
+ * --------------------------------------------------------------------- */
 void system_print_heap_free(void) {
   uint32_t fmem = esp_get_free_heap_size();
   printf("Heap free %d\n", fmem);
 }
+
+
+
+/* ------------------------------------------------------------------------
+ * PUBLIC
+ * --------------------------------------------------------------------- */
+void system_get_mac_address(macaddress_t result) {
+  esp_efuse_mac_get_default((uint8_t*)result);
+}
+
+/* ------------------------------------------------------------------------
+ * PUBLIC
+ * --------------------------------------------------------------------- */
+void system_get_mac_address_str(char *result, size_t len) {
+  macaddress_t addr;
+
+  if(len < 18) {
+    sprintf(result, "ERR");
+    return;
+  }
+
+  system_get_mac_address(addr);
+
+
+  sprintf(result, "%X:%X:%X:%X:%X:%X",
+          addr[0],
+          addr[1],
+          addr[2],
+          addr[3],
+          addr[4],
+          addr[5]
+          );
+}
+
+
+/* ------------------------------------------------------------------------
+ * PUBLIC
+ * --------------------------------------------------------------------- */
+uint64_t system_get_unix_time() {
+  struct timeval now;
+  gettimeofday(&now, 0x0);
+  return (uint64_t)now.tv_sec;
+}
+
+
+/*
+ *
+
+ // Get time
+ struct timeval now;
+ gettimeofday(&now,0x0);
+ time_t seconds = now.tv_sec;
+
+ //struct tm *local = localtime(&seconds);
+
+ char buffer[64];
+ struct tm timeinfo;
+
+ localtime_r(&seconds, &timeinfo);
+ strftime(buffer, sizeof(buffer),"%c",&timeinfo);
+
+ printf("%s\n", buffer);
+ */
+
+
+
+
+/* ------------------------------------------------------------------------
+ * PUBLIC
+ * --------------------------------------------------------------------- */
+void system_get_date_time(char *result, size_t len) {
+  
+}
+
 
 
 /* ------------------------------------------------------------------------
@@ -97,7 +175,8 @@ static int system_command_time_handler(int argc, char **argv) {
     struct tm timeinfo;
 
     localtime_r(&seconds, &timeinfo);
-    strftime(buffer, sizeof(buffer),"%c",&timeinfo);
+    //    strftime(buffer, sizeof(buffer),"%c",&timeinfo);
+    strftime(buffer, sizeof(buffer),"%Y-%m-%dT%H:%M:%S",&timeinfo);
 
     printf("%s\n", buffer);
   } else {
